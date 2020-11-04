@@ -15,6 +15,5 @@ spec:
       containers:
         - name: springboot-web
           image: nginx
-          imagePullPolicy: Always
           ports:
             - containerPort: 8080
