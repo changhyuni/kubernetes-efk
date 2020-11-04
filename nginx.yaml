@@ -1,20 +1,56 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
-  name: sample-deployment
-  namespace: default
+  name: rollout-bluegreen
 spec:
-  replicas: 3
+  replicas: 2
+  revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: springboot-web
+      app: rollout-bluegreen
   template:
     metadata:
       labels:
-        app: springboot-web
+        app: rollout-bluegreen
     spec:
       containers:
-        - name: springboot-web
-          image: nginx
-          ports:
-            - containerPort: 8080
+      - name: rollouts-demo
+        image: argoproj/rollouts-demo:blue
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+  strategy:
+    blueGreen: 
+      activeService: rollout-bluegreen-active
+      previewService: rollout-bluegreen-preview
+      autoPromotionEnabled: false
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rollout-bluegreen-active
+spec:
+  selector:
+    app: rollout-bluegreen
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+    nodePort: 30081
+  type: NodePort
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: rollout-bluegreen-preview
+spec:
+  selector:
+    app: rollout-bluegreen
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+    nodePort: 30082
+  type: NodePort
